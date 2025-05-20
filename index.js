@@ -67,6 +67,8 @@ app.post('/api/generate-report', async (req, res) => {
   }
 });
 
-app.listen(3001, () => {
-  console.log('Backend in ascolto su http://localhost:3001');
+// Porta dinamica per Render
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Backend in ascolto su http://localhost:${PORT}`);
 });
