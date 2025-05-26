@@ -1,17 +1,25 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-
-// Import fetch compatibile con tutte le versioni di Node
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Route di test
+app.get('/api/test', (req, res) => {
+  res.json({ status: "ok" });
+});
+
+// --- ROUTE PER BREVO ---
 app.post('/api/subscribe', async (req, res) => {
   const { name, email, company, url, goals } = req.body;
   const apiKey = process.env.BREVO_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: 'BREVO_API_KEY mancante' });
+  }
 
   const data = {
     email,
@@ -38,36 +46,16 @@ app.post('/api/subscribe', async (req, res) => {
     const result = await response.json();
     res.status(response.status).json(result);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// --- ROUTE PER OPENAI ---
-app.post('/api/generate-report', async (req, res) => {
-  const { prompt } = req.body;
-  const openaiKey = process.env.OPENAI_API_KEY;
-
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
-    const data = await response.json();
-    res.status(response.status).json(data);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'AI service error' });
-  }
+// --- ROUTE PER PAYPAL CLIENT ID ---
+app.get('/api/paypal-client-id', (req, res) => {
+  res.json({ clientId: process.env.PAYPAL_CLIENT_ID });
 });
 
-// Porta dinamica per Render
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Backend in ascolto su http://localhost:${PORT}`);
